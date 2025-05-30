@@ -8,6 +8,7 @@ local ChatService = game:GetService("Chat")
 local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local TextChatService = game:GetService("TextChatService")
 local Heartbeat = RunService.Heartbeat
 
 local framework = {
@@ -38,9 +39,7 @@ do
     
     updatesGroup:AddLabel(
         'update logs:\n' ..
-        '[+] anti afk\n' ..
-        '[~] fixed target hud (my bad)\n' ..
-        '[~] cleaned up sections a little more\n' .. 
+        '[-] trash talk because of new chat system (i just realised mb)\n' ..
 	'find any bugs? dm me. have any suggestions? @d6jrz on discord', true
     )
 end
@@ -349,72 +348,6 @@ do
             if state then createTool() else removeTool() end
         end
     })
-
-    local words = {
-        "where are you aiming at?",
-        "sonned",
-        "bad",
-        "even my grandma has faster reactions",
-        ":clown:",
-        "gg = get good",
-        "im just better",
-        "my gaming chair is just better",
-        "clip me",
-        "skill",
-        ":Skull:",
-        "go play adopt me",
-        "go play brookhaven",
-        "omg you are so good :screm:",
-        "awesome",
-        "fridge",
-        "do not bully pliisss :sobv:",
-        "it was your lag ofc",
-        "fly high",
-        "*cough* *cough*",
-        "son",
-        "already mad?",
-        "please don't report :sobv:",
-        "sob harder",
-        "UE on top",
-        "alt + f4 for better aim",
-        "Get sonned",
-        "Where are you aiming? 💀",
-        "You just got outplayed...",
-        "Omg you're so good... said no one ever",
-        "You built like Gru, but with zero braincells 💀",
-        "Fly high but your aim is still low 😹",
-        "Bet you've never heard of UE",
-        "UE is best, sorry but its facts",
-        "UE > your skills 😭",
-        "UE always wins",
-        "UE doesn't miss, unlike you 💀",
-        "UE made me get ekittens"
-    }
-
-    local enabled = false
-
-    group:AddToggle("autotrash_e", { Text = "trash talk", Default = false }):OnChanged(function(v)
-        enabled = v
-    end)
-
-    table.insert(framework.connections, UserInputService.InputBegan:Connect(function(input, gpe)
-        if gpe or not enabled then return end
-        if input.KeyCode == Enum.KeyCode.E then
-            local msg = words[math.random(1, #words)]
-            local legacy = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-
-            if legacy then
-                local event = legacy:FindFirstChild("SayMessageRequest")
-                if event then event:FireServer(msg, "All") end
-            else
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
-                    ChatService:Chat(LocalPlayer.Character.Head, msg, Enum.ChatColor.Red)
-                end
-            end
-
-            api:Notify("Trash: " .. msg, 1.5)
-        end
-    end))
 
    group:AddToggle("anti_rpg", {
         Text = "anti rpg",
