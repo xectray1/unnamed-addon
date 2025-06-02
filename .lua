@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ChatService = game:GetService("Chat")
 local UserInputService = game:GetService("UserInputService")
 local VirtualUser = game:GetService("VirtualUser")
+local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local TextChatService = game:GetService("TextChatService")
 local Heartbeat = RunService.Heartbeat
@@ -39,7 +40,8 @@ do
     
     updatesGroup:AddLabel(
         'update logs:\n' ..
-        '[-] trash talk because of new chat system (i just realised mb)\n' ..
+        '[+] fixed trash talk\n' ..
+        '[+] teleport to silent aim target\n' ..
 	'find any bugs? dm me. have any suggestions? @d6jrz on discord', true
     )
 end
@@ -349,6 +351,70 @@ do
         end
     })
 
+    local words = {
+        "where are you aiming at?",
+        "sonned",
+        "bad",
+        "even my grandma has faster reactions",
+        ":clown:",
+        "gg = get good",
+        "im just better",
+        "my gaming chair is just better",
+        "clip me",
+        "skill",
+        ":Skull:",
+        "go play adopt me",
+        "go play brookhaven",
+        "omg you are so good :screm:",
+        "awesome",
+        "fridge",
+        "do not bully pliisss :sobv:",
+        "it was your lag ofc",
+        "fly high",
+        "*cough* *cough*",
+        "son",
+        "already mad?",
+        "please don't report :sobv:",
+        "sob harder",
+        "UE on top",
+        "alt + f4 for better aim",
+        "Get sonned",
+        "Where are you aiming? 💀",
+        "You just got outplayed...",
+        "Omg you're so good... said no one ever",
+        "You built like Gru, but with zero braincells 💀",
+        "Fly high but your aim is still low 😹",
+        "Bet you've never heard of UE",
+        "UE is best, sorry but its facts",
+        "UE > your skills 😭",
+        "UE always wins",
+        "UE doesn't miss, unlike you 💀",
+        "UE made me get ekittens"
+    }
+
+    local enabled = false
+
+group:AddToggle("autotrash_e", { Text = "trash talk", Default = false }):OnChanged(function(v)
+    enabled = v
+end)
+
+local function SendChatMessage(message)
+    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        TextChatService.TextChannels.RBXGeneral:SendAsync(message)
+    else
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(message, "All")
+    end
+end
+
+table.insert(framework.connections, UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe or not enabled then return end
+    if input.KeyCode == Enum.KeyCode.E then
+        local msg = words[math.random(1, #words)]
+        SendChatMessage(msg)
+        api:Notify("Trash: " .. msg, 1.5)
+    end
+end))
+
    group:AddToggle("anti_rpg", {
         Text = "anti rpg",
         Default = true,
@@ -528,6 +594,37 @@ end
 local tpGroup = extrasTab:AddLeftGroupbox("teleports")
 local lastDeathPosition = nil
 local savedPosition
+
+tpGroup:AddToggle("t_teleport", {
+    Text = "teleport to target (silent aim)",
+    Tooltip = "j to teleport rightshift to teleport back",
+    Default = true,
+}):OnChanged(function(value)
+    enabled = value
+end)
+
+local positionStack = {}
+
+table.insert(framework.connections, UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe or not enabled then return end
+
+    if input.KeyCode == Enum.KeyCode.J then
+        local target = api.Target.silent and api.Target.silent.player
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = target.Character.HumanoidRootPart
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                table.insert(positionStack, LocalPlayer.Character.HumanoidRootPart.CFrame)
+                LocalPlayer.Character.HumanoidRootPart.CFrame = hrp.CFrame
+            end
+        end
+
+    elseif input.KeyCode == Enum.KeyCode.RightShift then
+        if #positionStack > 0 and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local lastPos = table.remove(positionStack)
+            LocalPlayer.Character.HumanoidRootPart.CFrame = lastPos
+        end
+    end
+end))
 
 tpGroup:AddButton("save position", function()
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -2328,25 +2425,27 @@ function api:Unload()
     end
     table.clear(framework.connections)
 
-    for _, toggle in pairs(Toggles) do
-        if toggle.Name and (
-            toggle.Name == "anti_sit" or
-            toggle.Name == "god_block" or
-            toggle.Name == "logs_toggle" or
-            toggle.Name == "anti_fling" or
-            toggle.Name == "jerk_toggle" or
-            toggle.Name == "autotrash_e" or
-            toggle.Name == "anti_rpg" or
-            toggle.Name == "sort_toggle" or
-            toggle.Name == "char_spin" or
-            toggle.Name == "no_jump_cd" or
-            toggle.Name == "multi_tool_toggle" or
-            toggle.Name == "anti_afk" or
-            toggle.Name == "cash_aura_toggle"
-        ) then
-            toggle.Value = false
-        end
+for _, toggle in pairs(Toggles) do
+    if toggle.Name and (
+        toggle.Name == "anti_sit" or
+        toggle.Name == "god_block" or
+        toggle.Name == "logs_toggle" or
+        toggle.Name == "anti_fling" or
+        toggle.Name == "jerk_toggle" or
+        toggle.Name == "autotrash_e" or
+        toggle.Name == "anti_rpg" or
+        toggle.Name == "sort_toggle" or
+        toggle.Name == "char_spin" or
+        toggle.Name == "no_jump_cd" or
+        toggle.Name == "multi_tool_toggle" or
+        toggle.Name == "anti_afk" or
+        toggle.Name == "cash_aura_toggle" or
+        toggle.Name == "t_teleport"
+    ) then
+        toggle.Value = false
     end
+end
+
 
     if afkConnection then
         pcall(function()
